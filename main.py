@@ -8,7 +8,7 @@ import httpx
 
 app = FastAPI()
 
-# Allow all origins for development (adjust for production)
+# Allow all origis for development (adjust for production)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://job-website-1.onrender.com"],
