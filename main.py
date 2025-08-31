@@ -1,4 +1,3 @@
-
 # Cleaned up imports
 from urllib.parse import urlparse
 from fastapi import FastAPI, Query
@@ -156,3 +155,88 @@ def job_details(url: str):
         }
     except Exception as e:
         return {"error": str(e), "url": url}
+
+# Helper for category scraping
+from fastapi import Query
+
+@app.get("/govt_jobs")
+def govt_jobs(page: int = Query(1, description="Page number for pagination")):
+    base_url = "https://bdgovtjob.net/category/government-jobs-circular/"
+    return scrape_category_jobs(base_url, page)
+
+@app.get("/bank_jobs")
+def bank_jobs(page: int = Query(1, description="Page number for pagination")):
+    base_url = "https://bdgovtjob.net/category/bank-jobs/"
+    return scrape_category_jobs(base_url, page)
+
+@app.get("/school_college_jobs")
+def school_college_jobs(page: int = Query(1, description="Page number for pagination")):
+    base_url = "https://bdgovtjob.net/category/university-job-circular/"
+    return scrape_category_jobs(base_url, page)
+
+@app.get("/ngo_jobs")
+def ngo_jobs(page: int = Query(1, description="Page number for pagination")):
+    base_url = "https://bdgovtjob.net/category/ngo-job-circular/"
+    return scrape_category_jobs(base_url, page)
+
+# Helper function for category scraping
+def scrape_category_jobs(base_url, page):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    if page > 1:
+        url = f"{base_url}page/{page}/"
+    else:
+        url = base_url
+    try:
+        response = httpx.get(url, headers=headers)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        jobs = []
+        for article in soup.find_all("article", class_="post"):
+            h2 = article.find("h2", class_="entry-title")
+            title = h2.get_text(strip=True) if h2 else None
+            link = h2.find("a")["href"] if h2 and h2.find("a") else None
+            img_tag = article.find("div", class_="post-image")
+            img_url = None
+            if img_tag and img_tag.find("img"):
+                img_url = img_tag.find("img").get("src")
+            vacancy_box = article.find("div", class_="job-info-box job-vacancy")
+            vacancies = None
+            if vacancy_box:
+                val = vacancy_box.find("div", class_="job-value")
+                vacancies = val.get_text(strip=True) if val else None
+            deadline_box = article.find("div", class_="job-info-box job-deadline")
+            deadline = None
+            if deadline_box:
+                val = deadline_box.find("div", class_="job-value")
+                deadline = val.get_text(strip=True) if val else None
+            pub_date = None
+            date_box = article.find("div", class_="job-info-box job-publish-date")
+            if date_box:
+                val = date_box.find("div", class_="job-value")
+                pub_date = val.get_text(strip=True) if val else None
+            if not pub_date:
+                time_tag = article.find("time", class_="entry-date")
+                if time_tag:
+                    pub_date = time_tag.get_text(strip=True)
+            summary_box = article.find("div", class_="entry-summary")
+            summary = summary_box.get_text(strip=True) if summary_box else None
+            categories = []
+            footer = article.find("footer", class_="entry-meta")
+            if footer:
+                cat_links = footer.find_all("a", rel="category tag")
+                categories = [a.get_text(strip=True) for a in cat_links]
+            jobs.append({
+                "title": title,
+                "link": link,
+                "image": img_url,
+                "vacancies": vacancies,
+                "deadline": deadline,
+                "publish_date": pub_date,
+                "summary": summary,
+                "categories": categories
+            })
+        return {"url": url, "jobs": jobs}
+    except Exception as e:
+        return {"error": str(e), "url": url, "jobs": []}
