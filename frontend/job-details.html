@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Details</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-content">
+            <span class="logo-text">Job Explorer</span>
+            <div class="nav-links job-details-nav-links">
+                <a href="index.html#newest">Newest Jobs</a>
+                <a href="index.html#hot">Hot Jobs</a>
+                <a href="index.html#barishal">Barishal Jobs</a>
+                <a href="index.html#recent-results">Job Results</a>
+                <a href="index.html#recent-admit">Admit Cards</a>
+                <a href="index.html#school-college">School & College Job</a>
+            </div>
+            <a href="favourites.html" class="star-btn-nav job-details-star-btn" title="Favourites" style="padding:0 12px;vertical-align:middle;display:inline-flex;align-items:center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </a>
+            <a href="index.html" class="home-btn-nav job-details-home-btn">Home</a>
+        </div>
+    </nav>
+    <div class="container" style="margin-top:5px;">
+        <div id="job-details-content" style="padding:10px;min-height:200px;">
+        </div>
+    <style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    /* Star button: show only on desktop, hide on mobile */
+    nav .job-details-star-btn {
+        display: inline-block !important;
+    }
+    @media (max-width: 600px) {
+        nav .job-details-star-btn {
+            display: none !important;
+        }
+    }
+        /* Add top gap for desktop screens */
+        @media (min-width: 601px) {
+            .container {
+                margin-top: 32px !important;
+            }
+        }
+    </style>
+    </div>
+    <script>
+    function getQueryParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+    }
+    async function loadJobDetails() {
+        const jobUrl = getQueryParam('url');
+        const contentDiv = document.getElementById('job-details-content');
+        // Show spinner while loading
+        contentDiv.innerHTML = '<div id="loading-spinner" style="display:flex;align-items:center;justify-content:center;min-height:550px;">'+
+            '<div class="spinner" style="width:40px;height:40px;border:5px solid #f3f3f3;border-top:5px solid #2f2b42;border-radius:50%;animation:spin 1s linear infinite;"></div>'+
+        '</div>';
+        const startTime = Date.now();
+        if (!jobUrl) {
+            contentDiv.innerHTML = '<div style="color:#c00;">No job URL provided.</div>';
+            return;
+        }
+        try {
+            const res = await fetch(`http://127.0.0.1:8000/job_details?url=${encodeURIComponent(jobUrl)}`);
+            const data = await res.json();
+            const elapsed = Date.now() - startTime;
+            const minDelay = 1000;
+            const showContent = () => {
+                if (data.error) {
+                    contentDiv.innerHTML = `<div style='color:#c00;'>${data.error}</div>`;
+                    return;
+                }
+                let html = '';
+                let lastDate = '';
+                let appMethod = '';
+                // let onlineApplyUrl = '';
+                let allApplyText = '';
+                if (data.content_html) {
+                    // Parse content_html, remove bdgj-ui-icon, and extract all <img> tags
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = data.content_html;
+                    tempDiv.querySelectorAll('.bdgj-ui-icon').forEach(el => el.remove());
+                    const imgs = tempDiv.querySelectorAll('img');
+                    if (imgs.length) {
+                        imgs.forEach(img => {
+                            html += `<img src='${img.src}' alt='Job Circular Image' style='max-width:100%;margin-bottom:16px;display:block;'>`;
+                        });
+                    } else {
+                        html = '<div style="color:#c00;">No image found.</div>';
+                    }
+
+                    // --- Extract Last Date, Application Method, and Online Apply link ---
+                    const allText = tempDiv.innerText;
+                    // 1. Last Date
+                    let match = allText.match(/(Application Deadline|Last Date)\s*[:：]?\s*([^\n]+)/i);
+                    if (match) {
+                        lastDate = match[2].trim();
+                    } else {
+                        // Try to find in <span> or <td> elements
+                        const spans = Array.from(tempDiv.querySelectorAll('span, td'));
+                        for (const el of spans) {
+                            if (/Application Deadline|Last Date/i.test(el.textContent)) {
+                                let text = el.textContent;
+                                let next = el.nextElementSibling;
+                                if (next && next.textContent.trim()) {
+                                    lastDate = next.textContent.trim();
+                                    break;
+                                } else {
+                                    let colonIdx = text.indexOf(':');
+                                    if (colonIdx !== -1) {
+                                        lastDate = text.slice(colonIdx + 1).trim();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // 2. Application Method (robust: check all text for online/offline)
+                    match = allText.match(/(Application Method|How to Apply)\s*[:：]?\s*([^\n]+)/i);
+                    if (match) {
+                        appMethod = match[2].trim();
+                    } else {
+                        const ps = Array.from(tempDiv.querySelectorAll('p, li'));
+                        for (const el of ps) {
+                            if (/Application Method|How to Apply/i.test(el.textContent)) {
+                                let text = el.textContent;
+                                let colonIdx = text.indexOf(':');
+                                if (colonIdx !== -1) {
+                                    appMethod = text.slice(colonIdx + 1).trim();
+                                    break;
+                                } else {
+                                    appMethod = text.trim();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    // Gather all text for robust detection
+                    allApplyText = (allText + ' ' + appMethod).replace(/\s+/g, ' ').toLowerCase();
+
+                    // --- Display the extracted info ---
+                // Show only the date in the format '20 September 2025' under the image, nothing else
+                if (lastDate) {
+                    // Try to extract a date in the format '20 September 2025' from lastDate
+                    let dateMatch = lastDate.match(/\b\d{1,2} [A-Za-z]+ 20\d{2}\b/);
+                    let dateText = dateMatch ? dateMatch[0] : lastDate;
+                    let applyMethod = 'Status Null';
+                    let showApplyOnline = false;
+                    if (allApplyText.includes('online')) {
+                        applyMethod = 'Online';
+                        showApplyOnline = true;
+                    } else if (allApplyText.includes('offline')) {
+                        applyMethod = 'Offline';
+                    }
+                    html += `<div style='margin-top:24px;text-align:left;font-size:1.1em;'><strong>Last Date :</strong> ${dateText}<br><strong>Apply Method :</strong> ${applyMethod}</div>`;
+                }
+
+                    // Do not show the old Application Method section under the image
+                } else {
+                    html = '<div style="color:#c00;">No image found.</div>';
+                }
+                contentDiv.innerHTML = html;
+            };
+            if (elapsed < minDelay) {
+                setTimeout(showContent, minDelay - elapsed);
+            } else {
+                showContent();
+            }
+        } catch (e) {
+            contentDiv.innerHTML = '<div style="color:#c00;">Failed to load job details.</div>';
+        }
+    }
+    window.addEventListener('DOMContentLoaded', loadJobDetails);
+    </script>
+</body>
+</html>

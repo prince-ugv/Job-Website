@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favourite Jobs</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <div class="nav-content">
+            <span class="logo-text">Job Explorer</span>
+            <div class="nav-links job-details-nav-links">
+                <a href="index.html#newest">Newest Jobs</a>
+                <a href="index.html#hot">Hot Jobs</a>
+                <a href="index.html#barishal">Barishal Jobs</a>
+                <a href="index.html#recent-results">Job Results</a>
+                <a href="index.html#recent-admit">Admit Cards</a>
+                <a href="index.html#school-college">School & College Job</a>
+            </div>
+            <a href="favourites.html" class="star-btn-nav job-details-star-btn" title="Favourites" style="padding:0 12px;vertical-align:middle;display:inline-flex;align-items:center;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </a>
+            <a href="index.html" class="home-btn-nav job-details-home-btn">Home</a>
+        </div>
+    </nav>
+    <div class="container" style="margin-top:5px;">
+        <h2 style="padding-left: 10px; margin: 0;">Favourite Jobs</h2>
+        <div id="favourite-jobs-list" class="jobs-list"></div>
+        <div id="no-favs-msg" style="display:none;padding:24px;color:#888;text-align:center;">No favourite jobs found.</div>
+    </div>
+    <style>
+    /* Grid layout for favourite jobs on desktop */
+    @media (min-width: 900px) {
+        #favourite-jobs-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px 16px;
+        }
+        .job-card.job-card-minimal {
+            min-width: 0;
+        }
+    }
+    nav .job-details-home-btn {
+        display: none !important;
+    }
+    @media (max-width: 600px) {
+        nav .job-details-home-btn {
+            display: inline-block !important;
+        }
+    }
+    nav .job-details-star-btn {
+        display: inline-block !important;
+    }
+    @media (max-width: 600px) {
+        nav .job-details-star-btn {
+            display: none !important;
+        }
+    }
+    @media (min-width: 601px) {
+        .container {
+            margin-top: 32px !important;
+        }
+    }
+    </style>
+    <script>
+    function getFavouriteJobs() {
+        return JSON.parse(localStorage.getItem('favouriteJobs') || '{}');
+    }
+    function renderFavouriteJobs() {
+        const favs = getFavouriteJobs();
+        const jobsList = document.getElementById('favourite-jobs-list');
+        const noFavsMsg = document.getElementById('no-favs-msg');
+        jobsList.innerHTML = '';
+        let jobs = [];
+        // Try to get all jobs from localStorage (if stored previously)
+        if (localStorage.getItem('allJobs')) {
+            jobs = JSON.parse(localStorage.getItem('allJobs'));
+        }
+        // Filter jobs by favourites
+        const favJobList = jobs.filter(job => favs[job.link || job.title]);
+        if (favJobList.length === 0) {
+            noFavsMsg.style.display = 'block';
+            return;
+        }
+        noFavsMsg.style.display = 'none';
+        jobsList.innerHTML = favJobList.map(job => `
+            <div class="job-card job-card-minimal">
+                ${job.image ? `<img src="${job.image}" alt="${job.title}" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:12px;">` : ''}
+                <div style="display:flex;align-items:center;width:100%;margin-bottom:6px;">
+                    <span class="publish-date-text" style="color:#555;font-size:0.97em;">${job.publish_date ? `Published: ${job.publish_date}` : ''}</span>
+                    <button class="favourite-btn active" title="Remove from favourites" data-jobid="${encodeURIComponent(job.link || job.title)}">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffb300" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                </div>
+                <a href="job-details.html?url=${encodeURIComponent(job.link)}" class="view-details-btn">View Details</a>
+            </div>
+        `).join('');
+        // Add event listeners for unfavourite buttons
+        jobsList.querySelectorAll('.favourite-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const jobId = decodeURIComponent(this.getAttribute('data-jobid'));
+                let favs = JSON.parse(localStorage.getItem('favouriteJobs') || '{}');
+                if (favs[jobId]) {
+                    delete favs[jobId];
+                    localStorage.setItem('favouriteJobs', JSON.stringify(favs));
+                    renderFavouriteJobs();
+                }
+            });
+        });
+    }
+    window.addEventListener('DOMContentLoaded', renderFavouriteJobs);
+    </script>
+</body>
+</html>
