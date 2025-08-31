@@ -1,394 +1,82 @@
-    <div class="mobile-floating-btns">
-        <button id="floatingScrollBtn" class="floating-scroll-btn" style="display:none;" aria-label="Scroll" tabindex="0">&#8593;</button>
-    </div>
-    <!-- Bottom navigation for mobile -->
-    <nav class="bottom-nav">
-        <a href="#newest" class="bottom-btn">Newest Jobs</a>
-        <a href="#hot" class="bottom-btn">Hot Jobs 🔥</a>
-        <a href="#barishal" class="bottom-btn">Barishal Jobs</a>
-    </nav>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-    .jobs-list {
-        min-height: 100%;
-        width: 100%;
-        box-shadow: none !important;
-    }
-    .section-spinner {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 160px;
-        width: 100%;
-        box-shadow: none;
-    }
-    .spinner {
-        border: 6px solid #f3f3f3;
-        border-top: 6px solid #2f2b42;
-        border-radius: 50%;
-        width: 44px;
-        height: 44px;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    </style>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Portal - Hot, Trending & Newest Jobs</title>
-    <link rel="stylesheet" href="style.css">
-    <nav class="top-nav">
-        <div class="nav-content">
-            <span class="logo-text">Job Explorer</span>
-            <div class="nav-links">
-                <a href="#newest">Newest Jobs</a>
-                <a href="#hot">Hot Jobs</a>
-                <a href="#barishal">Barishal Jobs</a>
-                <a href="#recent-results">Job Results</a>
-                <a href="#recent-admit">Admit Cards</a>
-                <a href="#school-college">School & College Job</a>
-            </div>
-            <div style="display:flex;align-items:center;gap:2px;">
-                <a href="favourites.html" class="favourite-nav-btn" aria-label="Favourites" tabindex="0" title="Favourite Jobs">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                </a>
-                <button id="refreshMobileBtn" class="refresh-top-btn" aria-label="Refresh" tabindex="0">&#x21bb;</button>
-                <div class="mobile-menu-btn" id="mobileMenuBtn">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-            </div>
-            <div class="mobile-menu-dropdown" id="mobileMenuDropdown">
-                <a href="#recent-admit">Admit Cards</a>
-                <a href="#recent-results">Job Results</a>
-                <a href="#school-college">School & College Job</a>
-            </div>
-        </div>
-    </nav>
-        <section class="section" id="hot" style="display:none;">
-            <h2>🔥 Hot Jobs</h2>
-            <div class="jobs-list" id="hot-jobs">
-                <!-- Hot jobs will appear here -->
-            </div>
-            <div class="pagination" id="hot-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:18px;"></div>
-    </section>
-        <section class="section" id="trending" style="display:none;">
-            <h2>📈 Trending Jobs</h2>
-            <div class="jobs-list" id="trending-jobs">
-                <!-- Trending jobs will appear here -->
-                <div class="job-card">
-                    <div class="job-title">AI Product Manager</div>
-                    <div class="job-meta">OpenAI &middot; San Francisco, CA</div>
-                </div>
-                <div class="job-card">
-                    <div class="job-title">Cloud DevOps Engineer</div>
-                    <div class="job-meta">Amazon &middot; Seattle, WA</div>
-                </div>
-            </div>
-        </section>
-        <section class="section" id="newest" style="display:none;">
-            <h2>🆕 Newest Jobs</h2>
-            <div class="jobs-list" id="newest-jobs">
-                <!-- Newest jobs will appear here -->
-            </div>
-            <div class="pagination" id="newest-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:18px;"></div>
-    </section>
-        <section class="section" id="barishal" style="display:none;">
-            <h2>🌍 Jobs in Barishal</h2>
-            <div class="jobs-list" id="barishal-jobs">
-                <!-- Jobs in Barishal will appear here -->
-            </div>
-            <div class="pagination" id="barishal-pagination" style="display:flex;justify-content:center;gap:8px;margin-top:18px;"></div>
-        </section>
-    </div>
-</script>
-<script>
-// Workaround: Always scroll to top on page load if no hash
-window.addEventListener('DOMContentLoaded', function() {
-    if (!window.location.hash) {
-        window.scrollTo(0, 0);
-    }
-});
-// Refresh button in top nav (mobile only)
-const refreshBtn = document.getElementById('refreshMobileBtn');
-function updateRefreshTopBtn() {
-    if (window.innerWidth <= 600) {
-        refreshBtn.style.display = 'inline-flex';
-    } else {
-        refreshBtn.style.display = 'none';
-    }
-}
-window.addEventListener('resize', updateRefreshTopBtn);
-window.addEventListener('DOMContentLoaded', updateRefreshTopBtn);
-if (refreshBtn) {
-    refreshBtn.addEventListener('click', function() {
-        window.scrollTo(0, 0);
-        window.location.reload();
-    });
-}
-// Floating scroll up/down button logic
-const floatingBtn = document.getElementById('floatingScrollBtn');
-let lastScrollY = window.scrollY;
-function updateFloatingBtn() {
-    const scrollY = window.scrollY;
-    const atTop = scrollY <= 2;
-    const atBottom = (window.innerHeight + scrollY) >= (document.body.scrollHeight - 2);
-    const isMobile = window.innerWidth <= 600;
-    if (!isMobile || atTop) {
-        floatingBtn.style.display = 'none';
-        lastScrollY = scrollY;
-        return;
-    }
-    floatingBtn.style.display = 'flex';
-    if (atBottom) {
-        floatingBtn.innerHTML = '&#8593;';
-        floatingBtn.setAttribute('aria-label', 'Scroll Up');
-    } else if (scrollY > lastScrollY) {
-        // Scrolling down
-        floatingBtn.innerHTML = '&#8595;';
-        floatingBtn.setAttribute('aria-label', 'Scroll Down');
-    } else if (scrollY < lastScrollY) {
-        // Scrolling up
-        floatingBtn.innerHTML = '&#8593;';
-        floatingBtn.setAttribute('aria-label', 'Scroll Up');
-    }
-    lastScrollY = scrollY;
-}
-window.addEventListener('scroll', updateFloatingBtn);
-window.addEventListener('resize', updateFloatingBtn);
-floatingBtn.addEventListener('click', function() {
-    // Always check the current icon to determine direction
-    if (floatingBtn.textContent.includes('↑')) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-});
-// Mobile 3-dot menu logic
-const menuBtn = document.getElementById('mobileMenuBtn');
-const menuDropdown = document.getElementById('mobileMenuDropdown');
-if (menuBtn && menuDropdown) {
-    menuBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        menuDropdown.classList.toggle('show');
-    });
-    document.addEventListener('click', function() {
-        menuDropdown.classList.remove('show');
-    });
-    menuDropdown.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Portal - Hot, Trending & Newest Jobs</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.jobs-list { min-height:100%; width:100%; box-shadow:none !important; }
+.section-spinner { display:flex; align-items:center; justify-content:center; min-height:160px; width:100%; box-shadow:none; }
+.spinner { border:6px solid #f3f3f3; border-top:6px solid #2f2b42; border-radius:50%; width:44px; height:44px; animation:spin 1s linear infinite; }
+@keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+</style>
+</head>
+<body>
 
-// --- JOBS FETCH & RENDER LOGIC ---
-const sectionToApi = {
-    'hot': 'hot',
-    'newest': 'newest',
-    'barishal': 'barishal'
-};
+<!-- Sections -->
+<section id="hot" style="display:none;"><h2>🔥 Hot Jobs</h2><div id="hot-jobs" class="jobs-list"></div><div id="hot-pagination" class="pagination" style="display:flex;justify-content:center;gap:8px;margin-top:18px;"></div></section>
+<section id="newest" style="display:none;"><h2>🆕 Newest Jobs</h2><div id="newest-jobs" class="jobs-list"></div><div id="newest-pagination" class="pagination" style="display:flex;justify-content:center;gap:8px;margin-top:18px;"></div></section>
+<section id="barishal" style="display:none;"><h2>🌍 Jobs in Barishal</h2><div id="barishal-jobs" class="jobs-list"></div><div id="barishal-pagination" class="pagination" style="display:flex;justify-content:center;gap:8px;margin-top:18px;"></div></section>
+
+<script>
+const API_BASE_URL = "https://job-website-mh1k.onrender.com";
+
+const sectionToApi = { hot:'hot', newest:'newest', barishal:'barishal' };
 
 function renderJobs(jobs, containerId) {
     const container = document.getElementById(containerId);
-    if (!container) return;
-    if (!jobs || jobs.length === 0) {
-        container.innerHTML = '<div style="padding:16px;color:#888;">No jobs found.</div>';
-        return;
-    }
-    // Get favourites from localStorage
-    let favs = JSON.parse(localStorage.getItem('favouriteJobs') || '{}');
-    container.innerHTML = jobs.map(job => {
+    if(!container) return;
+    if(!jobs || jobs.length===0){ container.innerHTML='<div style="padding:16px;color:#888;">No jobs found.</div>'; return; }
+    let favs = JSON.parse(localStorage.getItem('favouriteJobs')||'{}');
+    container.innerHTML = jobs.map(job=>{
         const jobId = job.link || job.title;
         const isFav = !!favs[jobId];
-        return `
-        <div class="job-card job-card-minimal">
-            ${job.image ? `<img src="${job.image}" alt="${job.title}" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:12px;">` : ''}
+        return `<div class="job-card job-card-minimal">
+            ${job.image?`<img src="${job.image}" alt="${job.title}" style="max-width:100%;height:auto;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:12px;">`:''}
             <div style="display:flex;align-items:center;width:100%;margin-bottom:6px;">
-                <span class="publish-date-text" style="color:#555;font-size:0.97em;">${job.publish_date ? `Published: ${job.publish_date}` : ''}</span>
-                <button class="favourite-btn${isFav ? ' active' : ''}" title="Add to favourites" data-jobid="${encodeURIComponent(jobId)}">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="${isFav ? '#ffb300' : 'none'}" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span class="publish-date-text" style="color:#555;font-size:0.97em;">${job.publish_date?`Published: ${job.publish_date}`:''}</span>
+                <button class="favourite-btn${isFav?' active':''}" data-jobid="${encodeURIComponent(jobId)}" title="Add to favourites">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="${isFav?'#ffb300':'none'}" stroke="#ffb300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
                 </button>
             </div>
             <a href="job-details.html?url=${encodeURIComponent(job.link)}" class="view-details-btn">View Details</a>
-        </div>
-        `;
+        </div>`;
     }).join('');
 
-    // Add event listeners for favourite buttons
-    container.querySelectorAll('.favourite-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+    container.querySelectorAll('.favourite-btn').forEach(btn=>{
+        btn.addEventListener('click', function(e){
             e.preventDefault();
             const jobId = decodeURIComponent(this.getAttribute('data-jobid'));
-            let favs = JSON.parse(localStorage.getItem('favouriteJobs') || '{}');
-            if (favs[jobId]) {
-                delete favs[jobId];
-                this.classList.remove('active');
-                this.querySelector('svg').setAttribute('fill', 'none');
-            } else {
-                favs[jobId] = true;
-                this.classList.add('active');
-                this.querySelector('svg').setAttribute('fill', '#ffb300');
-            }
+            let favs = JSON.parse(localStorage.getItem('favouriteJobs')||'{}');
+            if(favs[jobId]){ delete favs[jobId]; this.classList.remove('active'); this.querySelector('svg').setAttribute('fill','none'); }
+            else{ favs[jobId]=true; this.classList.add('active'); this.querySelector('svg').setAttribute('fill','#ffb300'); }
             localStorage.setItem('favouriteJobs', JSON.stringify(favs));
         });
     });
 }
 
-
-async function fetchAndShowJobs(section, page=1) {
-    let apiSection = sectionToApi[section] || '';
-    let url = `http://127.0.0.1:8000/scrape?${apiSection ? 'section=' + apiSection + '&' : ''}page=${page}`;
-    const containerId = section + '-jobs';
+async function fetchAndShowJobs(section,page=1){
+    let apiSection = sectionToApi[section]||'';
+    let url = `${API_BASE_URL}/scrape?${apiSection ? 'section='+apiSection+'&':''}page=${page}`;
+    const containerId = section+'-jobs';
     const container = document.getElementById(containerId);
-    if (container) {
-        container.innerHTML = '<div class="section-spinner"><div class="spinner"></div></div>';
-    }
-    try {
+    if(container) container.innerHTML='<div class="section-spinner"><div class="spinner"></div></div>';
+    try{
         const res = await fetch(url);
         const data = await res.json();
         renderJobs(data.jobs, containerId);
-        // Show pagination for all main sections
-        if (['newest','hot','barishal'].includes(section)) {
-            renderPagination(section, page, data.jobs.length);
-        }
-    } catch (e) {
-        if (container) container.innerHTML = '<div style="padding:16px;color:#c00;">Failed to load jobs.</div>';
-        if (['newest','hot','barishal'].includes(section)) {
-            renderPagination(section, page, 0);
-        }
+    }catch(e){
+        if(container) container.innerHTML='<div style="padding:16px;color:#c00;">Failed to load jobs.</div>';
     }
 }
 
-function renderPagination(section, currentPage, jobsCount) {
-    const pagContainer = document.getElementById(section + '-pagination');
-    if (!pagContainer) return;
-    let maxPages = 100000; // Arbitrary high value; you can set this dynamically if you know total pages
-    let pagesToShow = 4;
-    pagContainer.innerHTML = '';
-    // Previous button
-    pagContainer.innerHTML += `<button class="pag-btn" ${currentPage <= 1 ? 'disabled' : ''} data-page="${currentPage-1}">&laquo; Prev</button>`;
-
-    // Always show 1 as the first page
-    pagContainer.innerHTML += `<button class="pag-btn${currentPage===1?' active':''}" data-page="1">1</button>`;
-
-    // Show next 3 pages, shifting as you paginate
-    let start = 2;
-    if (currentPage > 2) {
-        start = currentPage;
-    }
-    for (let i = start; i < start + 3 && i <= maxPages; i++) {
-        pagContainer.innerHTML += `<button class="pag-btn${i===currentPage?' active':''}" data-page="${i}">${i}</button>`;
-    }
-
-    // Next button
-    pagContainer.innerHTML += `<button class="pag-btn" ${jobsCount === 0 ? 'disabled' : ''} data-page="${currentPage+1}">Next &raquo;</button>`;
-
-    // Add event listeners
-    pagContainer.querySelectorAll('.pag-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const page = parseInt(this.getAttribute('data-page'));
-            if (!isNaN(page) && page > 0) {
-                fetchAndShowJobs(section, page);
-            }
-        });
-    });
-}
-
-// Fetch jobs for all main sections on load
-fetchAndShowJobs('hot', 1);
-fetchAndShowJobs('barishal', 1);
-fetchAndShowJobs('newest', 1);
+// Fetch all sections
+fetchAndShowJobs('hot',1);
+fetchAndShowJobs('newest',1);
+fetchAndShowJobs('barishal',1);
 </script>
 </body>
-<script>
-// Mobile section navigation logic
-const sectionIds = ['hot', 'trending', 'newest', 'barishal'];
-function showSection(sectionId) {
-    sectionIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            if (window.innerWidth <= 600) {
-                el.style.display = (id === sectionId) ? 'block' : 'none';
-            } else {
-                el.style.display = (id === sectionId) ? 'block' : 'none';
-            }
-        }
-    });
-}
-
-function handleResize() {
-    if (window.innerWidth <= 600) {
-        showSection(window._lastMobileSection || 'newest');
-    } else {
-        // On desktop, show only the selected section (from hash or default to newest)
-        var hash = window.location.hash || '#newest';
-        var sectionId = hash.substring(1);
-        showSection(sectionId);
-    }
-}
-
-window.addEventListener('resize', handleResize);
-window.addEventListener('DOMContentLoaded', function() {
-    // Always force default hash to #newest on load
-    window.location.hash = '#newest';
-    // Add click listeners to both top and bottom nav links
-    document.querySelectorAll('.bottom-btn, .top-nav a').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            const href = btn.getAttribute('href');
-            if (href && href.startsWith('#')) {
-                // Always scroll to top when switching sections
-                window.scrollTo({ top: 0, behavior: 'auto' });
-                if (window.innerWidth <= 600) {
-                    e.preventDefault();
-                    const sectionId = href.substring(1);
-                    window._lastMobileSection = sectionId;
-                    showSection(sectionId);
-                    // Set active class for bottom nav
-                    if (btn.classList.contains('bottom-btn')) {
-                        document.querySelectorAll('.bottom-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                    }
-                } else {
-                    // Desktop: set active class for top nav and show only selected section
-                    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
-                    if (btn.closest('.nav-links')) {
-                        btn.classList.add('active');
-                    }
-                    const sectionId = href.substring(1);
-                    showSection(sectionId);
-                }
-            }
-        });
-    });
-    // Set initial active button and section on load
-    if (window.innerWidth <= 600) {
-        var lastSection = window._lastMobileSection || 'newest';
-        document.querySelectorAll('.bottom-btn').forEach(btn => {
-            if (btn.getAttribute('href') === '#' + lastSection) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
-        showSection(lastSection);
-    } else {
-        // Desktop: set active nav link and show only selected section based on hash
-        var hash = window.location.hash || '#newest';
-        document.querySelectorAll('.nav-links a').forEach(a => {
-            if (a.getAttribute('href') === hash) {
-                a.classList.add('active');
-            } else {
-                a.classList.remove('active');
-            }
-        });
-        showSection(hash.substring(1));
-    }
-    handleResize();
-});
-</script>
-</html>
 </html>
