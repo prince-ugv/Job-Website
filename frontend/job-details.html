@@ -67,7 +67,7 @@
             return;
         }
         try {
-            const res = await fetch(`http://127.0.0.1:8000/job_details?url=${encodeURIComponent(jobUrl)}`);
+            const res = await fetch(`https://job-website-mh1k.onrender.com/job_details?url=${encodeURIComponent(jobUrl)}`);
             const data = await res.json();
             const elapsed = Date.now() - startTime;
             const minDelay = 1000;
